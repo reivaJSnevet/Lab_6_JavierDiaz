@@ -23,7 +23,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
-      # Configurar variables de entorno a partir de secrets
+      # Configurar environment para cargar los secrets del entorno "dev"
       - name: Set Environment Variables from Secrets
         env:
           OKTA_ISSUER_URI: ${{ secrets.OKTA_ISSUER_URI }}
@@ -38,7 +38,7 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Run server
+      - name: Run Start
         env:
           OKTA_ISSUER_URI: ${{ secrets.OKTA_ISSUER_URI }}
           OKTA_CLIENT_ID: ${{ secrets.OKTA_CLIENT_ID }}
@@ -48,3 +48,4 @@ jobs:
           SECRET: ${{ secrets.SECRET }}
           APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
         run: npm start
+    environment: dev  # <--- Definir el environment "dev"
