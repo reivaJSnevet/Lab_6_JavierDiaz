@@ -1,0 +1,211 @@
+<!doctype html>
+<html>
+
+<head>
+  <title>Chat Socket.IO UNA</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font: 15px Helvetica, Arial;
+      background: #f9f9f9;
+      padding-bottom: 50px;
+    }
+
+    #chat-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    form {
+      background: #333;
+      padding: 10px;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      display: flex;
+    }
+
+    form input {
+      border: 0;
+      padding: 10px;
+      border-radius: 5px;
+      margin-right: 5px;
+    }
+
+    form button {
+      width: 10%;
+      background: #007BFF;
+      color: white;
+      border: none;
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    form button:hover {
+      background: #0056b3;
+    }
+
+    #messages {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+      margin-bottom: 70px;
+    }
+
+    #messages li {
+      padding: 10px;
+      margin-bottom: 5px;
+      border-radius: 10px;
+      max-width: 70%;
+    }
+
+    #messages li:nth-child(odd) {
+      background: #e1f5fe;
+    }
+
+    #messages li:nth-child(even) {
+      background: #fff;
+    }
+
+    #nombre,
+    #m {
+      display: inline-block;
+    }
+
+    #m {
+      flex: 1;
+      margin-right: 4px;
+    }
+
+    #nombre {
+      width: 20%;
+    }
+
+    #typing-status {
+      font-style: italic;
+      color: grey;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="chat-container">
+    <ul id="messages"></ul>
+    <p id="typing-status"></p>
+  </div>
+
+  <!-- Botón de Logout -->
+
+  <form action="">
+    <input id="nombre" autocomplete="off" placeholder="Username" disabled/>
+    <input id="m" autocomplete="off" placeholder="Escriba un mensaje" />
+    <button>Send</button>
+    <button id="logout-button" style="margin: 10px; background: #ff4d4d; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px;">Logout</button>
+  </form>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.js"></script>
+  <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+  <script>
+    var colorHexTxt = "";
+
+    // Función para generar colores aleatorios en hexadecimal
+    function getRandomColor() {
+      var letters = '0123456789ABCDEF';
+      var color = '#';
+      for (var i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+    }
+
+    // Función para obtener el valor de la cookie
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+
+    $(function () {
+      var socket = io();
+
+      // Obtener la cookie del usuario y extraer el nombre y apellido
+      const userCookie = getCookie('user');
+      if (userCookie) {
+        // Decodificar la cookie antes de parsearla
+        const user = JSON.parse(decodeURIComponent(userCookie));
+        $('#nombre').val(user.name); // Coloca el nombre completo en el input de nombre
+      }
+
+      // Emitir evento al servidor
+      $('form').submit(function () {
+        // Captura de nombre y mensaje
+        var nombreTxt = $('#nombre').val().trim() || "Anonimo";
+        var mensajeTxt = $('#m').val().trim();
+
+        if (!mensajeTxt) {
+          alert("El mensaje no puede estar vacío");
+          return false;
+        }
+
+        if (!colorHexTxt) {
+          colorHexTxt = getRandomColor();
+        }
+
+        // Composición del mensaje en formato JSON para enviar al servidor NODE
+        var jsonMsg = { nombre: nombreTxt, mensaje: mensajeTxt, color: colorHexTxt };
+
+        // Emitir el mensaje al servidor
+        socket.emit('Evento-Mensaje-Server', JSON.stringify(jsonMsg));
+        $('#m').val(''); // Limpiar el campo de entrada
+        return false;
+      });
+
+      // Escuchar del servidor
+      socket.on('Evento-Mensaje-Server', function (msg) {
+        var msgJson = JSON.parse(msg);
+        var mensajeDisplay = "<b style='color:" + msgJson.color + "'>" + msgJson.nombre + "</b>: " + msgJson.mensaje;
+        $('#messages').append($('<li>').html(mensajeDisplay)); // Usar .html() para permitir contenido embebido como iframes
+        window.scrollTo(0, document.body.scrollHeight);
+      });
+
+      // Manejar el evento de 'alguien está escribiendo'
+      $('#m').on('input', function () {
+        if ($('#m').val().trim() !== "") {
+          socket.emit('typing', $('#nombre').val().trim() || "Anonimo");
+        } else {
+          socket.emit('stop typing');
+        }
+      });
+
+      // Mostrar cuando alguien está escribiendo
+      socket.on('typing', function (nombre) {
+        $('#typing-status').text(nombre + " está escribiendo...");
+      });
+
+      // Ocultar el estado de escritura
+      socket.on('stop typing', function () {
+        $('#typing-status').text('');
+      });
+
+      // Enviar evento de "stop typing" cuando se envía el mensaje
+      $('form').on('submit', function () {
+        socket.emit('stop typing');
+      });
+
+      // Manejar el evento de logout
+      $('#logout-button').on('click', function () {
+        window.location.href = '/logout'; // Redirigir a la ruta de logout
+      });
+    });
+  </script>
+</body>
+
+</html>
