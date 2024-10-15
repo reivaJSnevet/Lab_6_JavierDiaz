@@ -38,7 +38,7 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Run Tests
+      - name: Run server
         env:
           OKTA_ISSUER_URI: ${{ secrets.OKTA_ISSUER_URI }}
           OKTA_CLIENT_ID: ${{ secrets.OKTA_CLIENT_ID }}
@@ -47,4 +47,4 @@ jobs:
           PORT: ${{ secrets.PORT }}
           SECRET: ${{ secrets.SECRET }}
           APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
-        run: npm test
+        run: npm start
