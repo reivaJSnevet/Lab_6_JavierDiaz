@@ -1,5 +1,5 @@
-var unalib = require('../unalib/index');
-var assert = require('assert');
+import unalib from '../unalib/index.js';
+import assert from 'assert';
 
 // Pruebas de la biblioteca `unalib`
 describe('unalib', function() {
